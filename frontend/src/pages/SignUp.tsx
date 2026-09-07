@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSignup, useSendVerificationCode } from "@/hooks/useUserQueries";
+import { useSignup } from "@/hooks/useUserQueries";
 
 export function SignUp() {
     const navigate = useNavigate();
@@ -26,9 +26,7 @@ export function SignUp() {
     // Use ref to track if signup was successful to prevent duplicate sends
     const signupSuccessRef = useRef(false);
 
-    const { mutate: signup, isPending: isSigningUp } = useSignup();
-    const { mutate: sendVerificationCode, isPending: isSendingCode } = useSendVerificationCode();
-    const isPending = isSigningUp || isSendingCode;
+    const { mutate: signup, isPending } = useSignup();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -53,30 +51,9 @@ export function SignUp() {
                     if (signupSuccessRef.current) return;
                     signupSuccessRef.current = true;
                     
-                    toast.success(res?.message || "Account created successfully!");
-
-                    // Send verification code
-                    sendVerificationCode(formData.email, {
-                        onSuccess: () => {
-                            toast.success("Verification code sent to your email!");
-                            navigate("/otp", {
-                                state: {
-                                    email: formData.email,
-                                    purpose: "verify-email",
-                                },
-                            });
-                        },
-                        onError: (error: any) => {
-                            console.error(error);
-                            toast.error("Failed to send verification code. You can retry on the next page.");
-                            navigate("/otp", {
-                                state: {
-                                    email: formData.email,
-                                    purpose: "verify-email",
-                                },
-                            });
-                        },
-                    });
+                    toast.success(res?.message || "Account created successfully! Welcome!");
+                    // Navigate directly to dashboard / home
+                    navigate("/");
                 },
                 onError: (err: any) => {
                     console.error("Signup error:", err);
@@ -86,20 +63,6 @@ export function SignUp() {
                         errorObj?.message ||
                         err?.message ||
                         "Signup failed. Please try again.";
-
-                    // If user is unverified, offer sending OTP and navigate to /otp
-                    if (errorObj?.unverified || message.toLowerCase().includes("unverified") || message.toLowerCase().includes("already exists")) {
-                        toast.error("Account exists but is unverified. Sending verification code...");
-                        sendVerificationCode(formData.email, {
-                            onSuccess: () => {
-                                navigate("/otp", { state: { email: formData.email, purpose: "verify-email" } });
-                            },
-                            onError: () => {
-                                navigate("/otp", { state: { email: formData.email, purpose: "verify-email" } });
-                            }
-                        });
-                        return;
-                    }
 
                     toast.error(message);
                 },
@@ -218,8 +181,8 @@ export function SignUp() {
                                 Privacy Policy
                             </Button>
                         </p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                            * A verification code will be sent to your email
+                        <p className="text-xs text-primary/80 leading-relaxed font-medium">
+                            ✓ Instant account creation & access
                         </p>
                     </div>
                 </CardFooter>

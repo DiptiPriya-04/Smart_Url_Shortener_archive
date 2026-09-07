@@ -10,6 +10,7 @@ import {
     verifyVerificationCode,
     sendForgotPasswordCode,
     verifyForgotPasswordCode,
+    demoLogin,
 } from "@/lib/user.api";
 import type {
     SignupData,
@@ -20,6 +21,21 @@ import type {
     ForgotPasswordData,
 } from "../types/types";
 import { toast } from "react-hot-toast";
+
+// Helper to extract and store token
+const saveAuthToken = (res: any) => {
+    const token = res?.data?.token || res?.token || (typeof res?.data === "string" ? res.data : null);
+    if (token) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("authToken", token);
+    }
+};
+
+const clearAuthToken = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
+};
 
 // -------------------- Get User Info --------------------
 export const useUserInfo = () => {
@@ -41,8 +57,9 @@ export const useSignup = () => {
 
     return useMutation({
         mutationFn: (data: SignupData) => signup(data),
-        onSuccess: () => {
-            toast.success("Account created successfully!");
+        onSuccess: (res: any) => {
+            saveAuthToken(res);
+            toast.success(res?.message || "Account created successfully!");
             queryClient.invalidateQueries({ queryKey: ["userInfo"] });
         },
         onError: (err: any) => {
@@ -60,7 +77,8 @@ export const useLogin = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: LoginData) => login(data),
-        onSuccess: () => {
+        onSuccess: (res: any) => {
+            saveAuthToken(res);
             queryClient.invalidateQueries({ queryKey: ["userInfo"] });
         },
         onError: (err: any) => {
@@ -74,23 +92,43 @@ export const useLogin = () => {
     });
 };
 
-export const useLogout = () => {
+export const useDemoLogin = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: logout,
-        onSuccess: () => {
-            // Clear all queries from cache
-            queryClient.clear();
-            toast.success("Logged out successfully!");
+        mutationFn: () => demoLogin(),
+        onSuccess: (res: any) => {
+            saveAuthToken(res);
+            queryClient.invalidateQueries({ queryKey: ["userInfo"] });
+            toast.success("Signed in as Demo User!");
         },
         onError: (err: any) => {
             const message =
                 err?.response?.data?.error ||
                 err?.response?.data?.message ||
                 err?.message ||
+                "Demo login failed.";
+            toast.error(message);
+        },
+    });
+};
+
+export const useLogout = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: logout,
+        onSuccess: () => {
+            clearAuthToken();
+            queryClient.clear();
+            toast.success("Logged out successfully!");
+        },
+        onError: (err: any) => {
+            clearAuthToken();
+            const message =
+                err?.response?.data?.error ||
+                err?.response?.data?.message ||
+                err?.message ||
                 "Logout failed. Please try again.";
             toast.error(message);
-            // Still clear cache even if API call fails
             queryClient.clear();
         },
     });
@@ -152,9 +190,12 @@ export const useSendVerificationCode = () => {
 };
 
 export const useVerifyVerificationCode = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: VerificationCodeData) => verifyVerificationCode(data),
-        onSuccess: () => {
+        onSuccess: (res: any) => {
+            saveAuthToken(res);
+            queryClient.invalidateQueries({ queryKey: ["userInfo"] });
             toast.success("Email verified successfully!");
         },
         onError: (err: any) => {

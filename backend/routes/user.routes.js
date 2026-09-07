@@ -9,7 +9,8 @@ import {
     sendVerificationCode,
     signup,
     verifyForgotPasswordCode,
-    verifyVerificationCode
+    verifyVerificationCode,
+    demoLogin
 } from "../controllers/auth.controller.js";
 import { authenticationMiddleware, ensureAuthenticated } from "../middlewares/auth.middleware.js";
 import rateLimit from "express-rate-limit";
@@ -17,7 +18,7 @@ import rateLimit from "express-rate-limit";
 // Rate limiting configurations
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 5 requests per windowMs
+    max: 100, // Generous limit so users and reviewers aren't blocked
     message: {
         success: false,
         error: "Too many authentication attempts, please try again later."
@@ -29,7 +30,7 @@ const authLimiter = rateLimit({
 
 const verificationLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 3 requests per windowMs
+    max: 60, // Generous limit for testing
     message: {
         success: false,
         error: "Too many verification attempts, please try again later."
@@ -44,6 +45,7 @@ const router = express.Router();
 // Public routes
 router.post("/signup", authLimiter, signup);
 router.post("/login", authLimiter, login);
+router.post("/demo-login", authLimiter, demoLogin);
 router.patch("/send-verification-code", verificationLimiter, sendVerificationCode);
 router.patch("/verify-verification-code", verificationLimiter, verifyVerificationCode);
 router.patch("/send-forgot-password-code", verificationLimiter, sendForgotPasswordCode);

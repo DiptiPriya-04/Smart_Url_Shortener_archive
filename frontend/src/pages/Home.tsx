@@ -15,6 +15,7 @@ import { Copy, QrCode, Link, ExternalLink, User } from "lucide-react";
 import { useUserInfo } from "@/hooks/useUserQueries";
 import { useCreateShortUrl, useGenerateQRCode } from "@/hooks/useUrlQueries";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "@/lib/axios";
 
 export const Home = () => {
     const navigate = useNavigate();
@@ -85,9 +86,8 @@ export const Home = () => {
                     const receivedShortCode = data?.shortCode;
 
                     if (receivedShortCode) {
-                        // Use backend URL instead of frontend origin
-                        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-                        const shortUrl = `${backendUrl}/${receivedShortCode}`;
+                        // Use live backend URL
+                        const shortUrl = `${BASE_URL}/${receivedShortCode}`;
                         setGeneratedUrl(shortUrl);
                         toast.success("URL shortened successfully!");
                     } else {

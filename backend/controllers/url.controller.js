@@ -374,7 +374,8 @@ export const generateQRCode = async (req, res) => {
         }
 
         // Build the full short URL (your base domain + short code)
-        const fullShortURL = `${process.env.BASE_URL || "http://localhost:3000"}/${shortCode}`;
+        const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === "production" ? "https://smart-url-shortener-backend-pixb.onrender.com" : "http://localhost:8000");
+        const fullShortURL = `${baseUrl}/${shortCode}`;
 
         // Generate QR Code as PNG Buffer
         const qrBuffer = await QRCode.toBuffer(fullShortURL, {

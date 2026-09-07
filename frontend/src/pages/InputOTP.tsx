@@ -22,18 +22,28 @@ export function OTPPage() {
     const { mutate: sendCode, isPending: isSending } = useSendVerificationCode()
 
     const email = location.state?.email
+    const passedCode = location.state?.code
 
     useEffect(() => {
         if (!email) {
             navigate("/signup")
             return
         }
-    }, [email, navigate])
+        if (passedCode && !otp) {
+            setOtp(passedCode.toString())
+        }
+    }, [email, passedCode, navigate])
 
     const handleResendCode = () => {
         sendCode(email, {
-            onSuccess: () => {
-                toast.success("Verification code sent successfully!")
+            onSuccess: (res: any) => {
+                const code = res?.data?.code
+                if (code) {
+                    setOtp(code.toString())
+                    toast.success(`Verification code generated: ${code}`, { duration: 6000 })
+                } else {
+                    toast.success("Verification code sent successfully!")
+                }
             },
             onError: (err: any) => {
                 toast.error(err?.response?.data?.error || err?.response?.data?.message || "Failed to send code")

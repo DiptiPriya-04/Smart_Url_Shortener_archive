@@ -33,6 +33,15 @@ export const login = async (data: LoginData) => {
     }
 };
 
+export const demoLogin = async () => {
+    try {
+        const response = await axiosInstance.post("/user/demo-login");
+        return response.data;
+    } catch (error) {
+        handleError(error);
+    }
+};
+
 // Logout (requires authentication)
 export const logout = async () => {
     try {

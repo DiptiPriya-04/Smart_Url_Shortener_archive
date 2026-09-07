@@ -46,6 +46,7 @@ import { UrlQrCode } from "@/components/Urls/UrlQrCode";
 import { UrlAnalytics } from "@/components/Urls/UrlAnalytics";
 import type { Url } from "@/types/types";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "@/lib/axios";
 
 const MyUrls = () => {
     const navigate = useNavigate();
@@ -159,8 +160,7 @@ const MyUrls = () => {
     };
 
     const getShortUrl = (shortCode: string) => {
-        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-        return `${backendUrl}/${shortCode}`;
+        return `${BASE_URL}/${shortCode}`;
     };
 
     const formatDate = (dateString: string) => {

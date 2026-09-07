@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useLogin, useSendVerificationCode } from "@/hooks/useUserQueries";
+import { useLogin, useSendVerificationCode, useDemoLogin } from "@/hooks/useUserQueries";
 import { toast } from "react-hot-toast";
 
 export function SignIn() {
@@ -24,7 +24,8 @@ export function SignIn() {
 
     const { mutate: login, isPending: isLoggingIn } = useLogin();
     const { mutate: sendVerificationCode, isPending: isSendingCode } = useSendVerificationCode();
-    const isPending = isLoggingIn || isSendingCode;
+    const { mutate: demoLogin, isPending: isDemoLoggingIn } = useDemoLogin();
+    const isPending = isLoggingIn || isSendingCode || isDemoLoggingIn;
 
     // Check for verification success message from navigation state
     useState(() => {
@@ -63,24 +64,18 @@ export function SignIn() {
                         err?.message ||
                         "Login failed. Please try again.";
 
-                    // If account is unverified, trigger verification email and navigate to /otp
-                    if (errorObj?.unverified || message.toLowerCase().includes("verify")) {
-                        toast.error("Account not verified yet. Sending verification code...");
-                        sendVerificationCode(formData.email, {
-                            onSuccess: () => {
-                                navigate("/otp", { state: { email: formData.email, purpose: "verify-email" } });
-                            },
-                            onError: () => {
-                                navigate("/otp", { state: { email: formData.email, purpose: "verify-email" } });
-                            }
-                        });
-                        return;
-                    }
-
                     toast.error(message);
                 },
             }
         );
+    };
+
+    const handleDemoLogin = () => {
+        demoLogin(undefined, {
+            onSuccess: () => {
+                navigate("/");
+            }
+        });
     };
 
     const handleForgotPassword = () => {
@@ -94,9 +89,14 @@ export function SignIn() {
         }
 
         sendVerificationCode(formData.email, {
-            onSuccess: () => {
-                toast.success("Verification code sent to your Gmail!");
-                navigate("/otp", { state: { email: formData.email, purpose: "login-otp" } });
+            onSuccess: (res: any) => {
+                const code = res?.data?.code;
+                if (code) {
+                    toast.success(`Verification code generated! (Code: ${code})`, { duration: 6000 });
+                } else {
+                    toast.success("Verification code sent to your email!");
+                }
+                navigate("/otp", { state: { email: formData.email, purpose: "login-otp", code } });
             },
             onError: (err: any) => {
                 console.error("Send OTP error:", err);
@@ -201,6 +201,21 @@ export function SignIn() {
                             onClick={handleSendLoginOtp}
                         >
                             {isSendingCode ? "Sending Code to Gmail..." : "Sign In with Email OTP"}
+                        </Button>
+
+                        <div className="relative flex py-1 items-center">
+                            <div className="flex-grow border-t border-muted"></div>
+                            <span className="flex-shrink mx-3 text-xs text-muted-foreground uppercase font-semibold">Instant Test</span>
+                            <div className="flex-grow border-t border-muted"></div>
+                        </div>
+
+                        <Button 
+                            type="button" 
+                            className="w-full h-11 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                            disabled={isPending}
+                            onClick={handleDemoLogin}
+                        >
+                            {isDemoLoggingIn ? "Signing In as Demo User..." : "🚀 1-Click Demo Access"}
                         </Button>
                     </form>
                 </CardContent>
