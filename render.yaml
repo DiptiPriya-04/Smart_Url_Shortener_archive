@@ -1,0 +1,28 @@
+services:
+  - type: static
+    name: smart-url-shortener-frontend
+    rootDir: frontend
+    buildCommand: pnpm install && pnpm build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    name: smart-url-shortener-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: pnpm install
+    startCommand: pnpm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: HMAC_VERIFICATION_CODE_SECRET
+        generateValue: true
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
