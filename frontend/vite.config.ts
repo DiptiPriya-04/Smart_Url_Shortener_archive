@@ -22,6 +22,7 @@ function copyIndexTo404Plugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
+  plugins: [react(), tailwindcss()],
   plugins: [react(), tailwindcss(), copyIndexTo404Plugin()],
   resolve: {
     alias: {

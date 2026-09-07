@@ -108,6 +108,7 @@ export const sendVerificationCode = async (req, res) => {
         const normalizedEmail = email.toLowerCase().trim();
 
         // Find user by email
+        const [user] = await db
         let [user] = await db
             .select({
                 id: usersTable.id,
@@ -118,6 +119,7 @@ export const sendVerificationCode = async (req, res) => {
             .where(eq(usersTable.email, normalizedEmail));
 
         if (!user) {
+            return errorResponse(res, 404, `User with email ${normalizedEmail} doesn't exist`);
             // Auto-create user account so any user entering their email can receive OTP and log in
             const dummyPassword = crypto.randomBytes(32).toString('hex');
             const { salt, password: hashedPassword } = await hashPasswordWithSalt(dummyPassword);

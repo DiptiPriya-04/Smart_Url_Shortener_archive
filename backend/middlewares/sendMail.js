@@ -47,12 +47,16 @@ export const transport = {
     // 1. Try Brevo REST API (HTTPS port 443 - never blocked by Render, sends to ANY recipient without domain restriction)
     if (process.env.BREVO_API_KEY) {
       try {
-        const senderEmail = (
-          process.env.BREVO_SENDER_EMAIL ||
-          process.env.SMTP_USER ||
-          process.env.NODE_CODE_SENDING_EMAIL_ADDRESS ||
-          "diptipriya657@gmail.com"
-        ).trim();
+        // Brevo requires the sender email to be your verified account email (e.g. diptipriya657@gmail.com).
+        // Never use the Brevo SMTP login username (which ends in @smtp-brevo.com), or Gmail will send it to Spam!
+        let senderEmail = "diptipriya657@gmail.com";
+        if (process.env.BREVO_SENDER_EMAIL && !process.env.BREVO_SENDER_EMAIL.includes("@smtp-brevo.com")) {
+          senderEmail = process.env.BREVO_SENDER_EMAIL.trim();
+        } else if (process.env.SMTP_USER && !process.env.SMTP_USER.includes("@smtp-brevo.com")) {
+          senderEmail = process.env.SMTP_USER.trim();
+        } else if (process.env.NODE_CODE_SENDING_EMAIL_ADDRESS) {
+          senderEmail = process.env.NODE_CODE_SENDING_EMAIL_ADDRESS.trim();
+        }
 
         console.log(`[BREVO] Sending email to ${options.to} via HTTPS API (from: ${senderEmail})...`);
         const res = await fetch("https://api.brevo.com/v3/smtp/email", {
