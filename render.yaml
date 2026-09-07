@@ -26,3 +26,4 @@ services:
         sync: false
       - key: BREVO_SENDER_EMAIL
         sync: false
+

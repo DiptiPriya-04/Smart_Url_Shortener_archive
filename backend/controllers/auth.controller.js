@@ -108,7 +108,7 @@ export const sendVerificationCode = async (req, res) => {
         const normalizedEmail = email.toLowerCase().trim();
 
         // Find user by email
-        const [user] = await db
+        let [user] = await db
             .select({
                 id: usersTable.id,
                 email: usersTable.email,
@@ -118,7 +118,28 @@ export const sendVerificationCode = async (req, res) => {
             .where(eq(usersTable.email, normalizedEmail));
 
         if (!user) {
-            return errorResponse(res, 404, `User with email ${normalizedEmail} doesn't exist`);
+            // Auto-create user account so any user entering their email can receive OTP and log in
+            const dummyPassword = crypto.randomBytes(32).toString('hex');
+            const { salt, password: hashedPassword } = await hashPasswordWithSalt(dummyPassword);
+            const firstname = normalizedEmail.split('@')[0].slice(0, 50);
+
+            const [newUser] = await db
+                .insert(usersTable)
+                .values({
+                    firstname,
+                    lastname: "",
+                    email: normalizedEmail,
+                    password: hashedPassword,
+                    salt,
+                    verified: false,
+                })
+                .returning({
+                    id: usersTable.id,
+                    email: usersTable.email,
+                    verified: usersTable.verified,
+                });
+
+            user = newUser;
         }
 
         // Generate a cryptographically secure random code
