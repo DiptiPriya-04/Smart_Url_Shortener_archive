@@ -44,7 +44,48 @@ export const getTransporter = () => {
 
 export const transport = {
   sendMail: async (options) => {
-    // 1. Try Resend API if RESEND_API_KEY is configured
+    // 1. Try Brevo REST API (HTTPS port 443 - never blocked by Render, sends to ANY recipient without domain restriction)
+    if (process.env.BREVO_API_KEY) {
+      try {
+        const senderEmail = (
+          process.env.BREVO_SENDER_EMAIL ||
+          process.env.SMTP_USER ||
+          process.env.NODE_CODE_SENDING_EMAIL_ADDRESS ||
+          "diptipriya657@gmail.com"
+        ).trim();
+
+        console.log(`[BREVO] Sending email to ${options.to} via HTTPS API (from: ${senderEmail})...`);
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "api-key": process.env.BREVO_API_KEY.trim(),
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            sender: {
+              name: "Smart URL Shortener",
+              email: senderEmail,
+            },
+            to: [{ email: options.to }],
+            subject: options.subject,
+            htmlContent: options.html || options.text,
+            textContent: options.text,
+          }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.messageId) {
+          console.log(`[BREVO] Sent successfully to ${options.to}. Message ID: ${data.messageId}`);
+          return { messageId: data.messageId, accepted: [options.to] };
+        }
+        console.error(`[BREVO ERROR] Status ${res.status}:`, data);
+      } catch (brevoErr) {
+        console.error(`[BREVO EXCEPTION]`, brevoErr.message);
+      }
+    }
+
+    // 2. Try Resend API if RESEND_API_KEY is configured
     if (process.env.RESEND_API_KEY) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY);
@@ -69,7 +110,7 @@ export const transport = {
       }
     }
 
-    // 2. Nodemailer SMTP transport fallback
+    // 3. Nodemailer SMTP transport fallback
     const t = getTransporter();
     const targetHost = t.options?.service || t.options?.host || "default";
     console.log(`[SMTP] Sending email to ${options.to} via ${targetHost}...`);

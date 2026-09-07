@@ -87,6 +87,30 @@ export function SignIn() {
         navigate("/forgot-password");
     };
 
+    const handleSendLoginOtp = () => {
+        if (!formData.email) {
+            toast.error("Please enter your email address first");
+            return;
+        }
+
+        sendVerificationCode(formData.email, {
+            onSuccess: () => {
+                toast.success("Verification code sent to your Gmail!");
+                navigate("/otp", { state: { email: formData.email, purpose: "login-otp" } });
+            },
+            onError: (err: any) => {
+                console.error("Send OTP error:", err);
+                const errorObj = err?.response?.data || err;
+                const message =
+                    errorObj?.error ||
+                    errorObj?.message ||
+                    err?.message ||
+                    "Failed to send code";
+                toast.error(message);
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-lg border-0">
@@ -161,6 +185,22 @@ export function SignIn() {
                             disabled={isPending}
                         >
                             {isPending ? "Signing In..." : "Sign In"}
+                        </Button>
+
+                        <div className="relative flex py-1 items-center">
+                            <div className="flex-grow border-t border-muted"></div>
+                            <span className="flex-shrink mx-3 text-xs text-muted-foreground uppercase font-semibold">Or</span>
+                            <div className="flex-grow border-t border-muted"></div>
+                        </div>
+
+                        <Button 
+                            type="button" 
+                            variant="outline"
+                            className="w-full h-11 text-sm font-medium border-primary/20 hover:bg-primary/5"
+                            disabled={isPending}
+                            onClick={handleSendLoginOtp}
+                        >
+                            {isSendingCode ? "Sending Code to Gmail..." : "Sign In with Email OTP"}
                         </Button>
                     </form>
                 </CardContent>

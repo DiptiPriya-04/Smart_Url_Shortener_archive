@@ -121,10 +121,6 @@ export const sendVerificationCode = async (req, res) => {
             return errorResponse(res, 404, `User with email ${normalizedEmail} doesn't exist`);
         }
 
-        if (user.verified) {
-            return errorResponse(res, 400, "User is already verified");
-        }
-
         // Generate a cryptographically secure random code
         const codeValue = crypto.randomInt(100000, 999999).toString();
         console.log(`\n========================================\n[OTP GENERATED] Target Email: ${normalizedEmail} | CODE: ${codeValue}\n========================================\n`);
@@ -202,10 +198,6 @@ export const verifyVerificationCode = async (req, res) => {
 
         if (!user) {
             return errorResponse(res, 404, `User with email ${normalizedEmail} doesn't exist`);
-        }
-
-        if (user.verified) {
-            return errorResponse(res, 400, "User is already verified");
         }
 
         if (!user.verificationCode || !user.verificationCodeValidation) {
