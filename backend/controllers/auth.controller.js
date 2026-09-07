@@ -127,6 +127,7 @@ export const sendVerificationCode = async (req, res) => {
 
         // Generate a cryptographically secure random code
         const codeValue = crypto.randomInt(100000, 999999).toString();
+        console.log(`\n========================================\n[OTP GENERATED] Target Email: ${normalizedEmail} | CODE: ${codeValue}\n========================================\n`);
         const hashedCodeValue = await hmacProcess(
             codeValue,
             process.env.HMAC_VERIFICATION_CODE_SECRET
@@ -429,6 +430,7 @@ export const sendForgotPasswordCode = async (req, res) => {
 
         // Generate secure random code
         const codeValue = crypto.randomInt(100000, 999999).toString();
+        console.log(`\n========================================\n[RESET OTP GENERATED] Target Email: ${normalizedEmail} | CODE: ${codeValue}\n========================================\n`);
         const hashedCodeValue = await hmacProcess(
             codeValue,
             process.env.HMAC_VERIFICATION_CODE_SECRET
