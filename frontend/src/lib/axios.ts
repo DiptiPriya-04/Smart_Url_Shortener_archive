@@ -4,7 +4,11 @@ import axios from "axios";
 // For production: your frontend and backend are served from the same domain
 // const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "https://url-shortener-fbzr.onrender.com";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.MODE === "production"
+        ? "https://smart-url-shortener-backend-pixb.onrender.com"
+        : "http://localhost:8000");
 
 export const axiosInstance = axios.create({
     baseURL: BASE_URL,
